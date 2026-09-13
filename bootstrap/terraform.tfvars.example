@@ -1,0 +1,12 @@
+subscription_id = "00000000-0000-0000-0000-000000000000"
+location        = "France Central"
+project_name    = "mama-salama"
+environment     = "pfe"
+
+# Object ID (not client ID) of the GitHub OIDC identity.
+# ci_principal_id = "00000000-0000-0000-0000-000000000000"
+
+tags = {
+  owner       = "hajar-harkaoui"
+  application = "mama-salama"
+}

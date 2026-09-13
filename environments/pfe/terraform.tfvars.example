@@ -1,0 +1,22 @@
+subscription_id = "00000000-0000-0000-0000-000000000000"
+location        = "France Central"
+project_name    = "mama-salama"
+environment     = "pfe"
+
+# Activate only after auditing the application repositories.
+enable_postgres = false
+enable_backend  = false
+enable_frontend = false
+
+# backend_image = "<acr-name>.azurecr.io/mama-salama-backend:<tag-immuable>"
+# backend_port  = 8080
+
+backend_env = {
+  APP_ENV = "pfe"
+}
+
+tags = {
+  owner       = "hajar-harkaoui"
+  application = "mama-salama"
+  context     = "academic-pfe"
+}
