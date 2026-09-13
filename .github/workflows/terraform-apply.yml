@@ -1,11 +1,6 @@
 name: Terraform Apply
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "environments/**"
-      - "modules/**"
   workflow_dispatch:
 
 permissions:

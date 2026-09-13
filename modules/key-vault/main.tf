@@ -4,7 +4,7 @@ resource "azurerm_key_vault" "this" {
   resource_group_name        = var.resource_group_name
   tenant_id                  = var.tenant_id
   sku_name                   = "standard"
-  enable_rbac_authorization  = true
+  rbac_authorization_enabled = true
   purge_protection_enabled   = false
   soft_delete_retention_days = 7
   tags                       = var.tags

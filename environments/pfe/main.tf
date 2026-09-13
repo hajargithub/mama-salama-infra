@@ -71,16 +71,16 @@ resource "azurerm_key_vault_secret" "postgres_password" {
 }
 
 module "postgres" {
-  count               = var.enable_postgres ? 1 : 0
-  source              = "../../modules/postgres"
-  name                = "psql-${var.project_name}-${var.environment}-${local.suffix}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  database_name       = var.postgres_database_name
-  administrator_login = var.postgres_admin_username
+  count                  = var.enable_postgres ? 1 : 0
+  source                 = "../../modules/postgres"
+  name                   = "psql-${var.project_name}-${var.environment}-${local.suffix}"
+  resource_group_name    = azurerm_resource_group.main.name
+  location               = azurerm_resource_group.main.location
+  database_name          = var.postgres_database_name
+  administrator_login    = var.postgres_admin_username
   administrator_password = random_password.postgres[0].result
-  sku_name            = var.postgres_sku_name
-  tags                = local.common_tags
+  sku_name               = var.postgres_sku_name
+  tags                   = local.common_tags
 }
 
 module "container_app_environment" {
