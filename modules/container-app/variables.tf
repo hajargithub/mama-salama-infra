@@ -68,3 +68,19 @@ variable "external_enabled" {
   type        = bool
   default     = false
 }
+variable "key_vault_id" {
+  description = "Identifiant du Key Vault contenant les secrets de l'application"
+  type        = string
+  default     = null
+}
+
+variable "secret_environment_variables" {
+  description = "Variables d'environnement sensibles provenant de Key Vault"
+
+  type = map(object({
+    secret_name         = string
+    key_vault_secret_id = string
+  }))
+
+  default = {}
+}

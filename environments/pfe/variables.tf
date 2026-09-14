@@ -48,13 +48,13 @@ variable "enable_frontend" {
 variable "backend_image" {
   description = "Full backend container image reference."
   type        = string
-  default     = ""
+  default     = "acrmamasalamapfey4yy6.azurecr.io/mama-salama-backend@sha256:f9a5ff69304726ba9e61cd93d355974e66df47e94d649c126b717278b348b52f"
 }
 
 variable "backend_port" {
   description = "Port exposed by the backend container."
   type        = number
-  default     = 8080
+  default     = 8081
 }
 
 variable "backend_env" {
@@ -101,4 +101,15 @@ variable "discovery_image" {
   description = "Image Docker immuable du Service Discovery"
   type        = string
   default     = "acrmamasalamapfey4yy6.azurecr.io/mama-salama-discovery@sha256:97e09b20b581e4b0364350ef0c4e7a6c12343c4f870221caddde121701342ef4"
+}
+variable "frontend_url" {
+  description = "Adresse du frontend utilisée dans les emails"
+  type        = string
+  default     = "http://localhost:5173"
+}
+
+variable "minio_bucket_name" {
+  description = "Nom du bucket MinIO utilisé par le backend"
+  type        = string
+  default     = "mama-salama"
 }

@@ -11,6 +11,14 @@ resource "azurerm_role_assignment" "acr_pull" {
   principal_id         = azurerm_user_assigned_identity.this.principal_id
 }
 
+resource "azurerm_role_assignment" "key_vault_secrets_user" {
+  count = var.key_vault_id != null ? 1 : 0
+
+  scope                = var.key_vault_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.this.principal_id
+}
+
 resource "azurerm_container_app" "this" {
   name                         = var.name
   resource_group_name          = var.resource_group_name
@@ -28,6 +36,16 @@ resource "azurerm_container_app" "this" {
     identity = azurerm_user_assigned_identity.this.id
   }
 
+  dynamic "secret" {
+    for_each = var.secret_environment_variables
+
+    content {
+      name                = secret.value.secret_name
+      key_vault_secret_id = secret.value.key_vault_secret_id
+      identity            = azurerm_user_assigned_identity.this.id
+    }
+  }
+
   template {
     min_replicas = var.min_replicas
     max_replicas = var.max_replicas
@@ -40,9 +58,20 @@ resource "azurerm_container_app" "this" {
 
       dynamic "env" {
         for_each = var.environment_variables
+
         content {
           name  = env.key
           value = env.value
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.secret_environment_variables
+        iterator = secret_env
+
+        content {
+          name        = secret_env.key
+          secret_name = secret_env.value.secret_name
         }
       }
     }
@@ -59,5 +88,8 @@ resource "azurerm_container_app" "this" {
     }
   }
 
-  depends_on = [azurerm_role_assignment.acr_pull]
+  depends_on = [
+    azurerm_role_assignment.acr_pull,
+    azurerm_role_assignment.key_vault_secrets_user
+  ]
 }

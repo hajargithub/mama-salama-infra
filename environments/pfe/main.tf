@@ -10,6 +10,31 @@ resource "random_password" "postgres" {
   special          = true
   override_special = "!#%&*-_"
 }
+resource "random_bytes" "backend_jwt_secret" {
+  count  = var.enable_backend ? 1 : 0
+  length = 64
+}
+
+resource "random_password" "backend_admin_password" {
+  count            = var.enable_backend ? 1 : 0
+  length           = 24
+  special          = true
+  override_special = "!#%&*-_"
+}
+
+resource "azurerm_key_vault_secret" "backend_jwt_secret" {
+  count        = var.enable_backend ? 1 : 0
+  name         = "backend-jwt-secret"
+  value        = random_bytes.backend_jwt_secret[0].base64
+  key_vault_id = module.key_vault.id
+}
+
+resource "azurerm_key_vault_secret" "backend_admin_password" {
+  count        = var.enable_backend ? 1 : 0
+  name         = "backend-admin-password"
+  value        = random_password.backend_admin_password[0].result
+  key_vault_id = module.key_vault.id
+}
 
 locals {
   compact_project = replace(lower(var.project_name), "-", "")
@@ -120,19 +145,93 @@ module "container_app_environment" {
 }
 
 module "backend" {
-  count                        = var.enable_backend ? 1 : 0
-  source                       = "../../modules/container-app"
+  count  = var.enable_backend ? 1 : 0
+  source = "../../modules/container-app"
+
   name                         = "ca-backend-${var.project_name}-${var.environment}"
   resource_group_name          = azurerm_resource_group.main.name
   location                     = azurerm_resource_group.main.location
   container_app_environment_id = module.container_app_environment.id
-  container_name               = "backend"
-  image                        = var.backend_image
-  target_port                  = var.backend_port
-  registry_server              = module.acr.login_server
-  registry_id                  = module.acr.id
-  environment_variables        = var.backend_env
-  tags                         = local.common_tags
+
+  container_name = "backend"
+  image          = var.backend_image
+  target_port    = var.backend_port
+  cpu            = 0.5
+  memory         = "1Gi"
+  min_replicas   = 1
+  max_replicas   = 1
+
+  registry_server  = module.acr.login_server
+  registry_id      = module.acr.id
+  key_vault_id     = module.key_vault.id
+  external_enabled = false
+
+  environment_variables = merge(var.backend_env, {
+    SERVER_PORT                          = tostring(var.backend_port)
+    SPRING_DATASOURCE_URL                = "jdbc:postgresql://${module.postgres[0].fqdn}:5432/${var.postgres_database_name}?sslmode=require"
+    DB_USERNAME                          = var.postgres_admin_username
+    EUREKA_CLIENT_SERVICEURL_DEFAULTZONE = "${module.discovery[0].url}/eureka/"
+
+    EUREKA_INSTANCE_PREFER_IP_ADDRESS       = "false"
+    EUREKA_INSTANCE_HOSTNAME                = "ca-backend-${var.project_name}-${var.environment}"
+    EUREKA_INSTANCE_NON_SECURE_PORT         = "80"
+    EUREKA_INSTANCE_NON_SECURE_PORT_ENABLED = "true"
+    EUREKA_INSTANCE_SECURE_PORT_ENABLED     = "false"
+
+    MAIL_HOST      = "smtp.gmail.com"
+    MAIL_PORT      = "587"
+    MINIO_ENDPOINT = module.minio[0].endpoint
+    MINIO_BUCKET   = var.minio_bucket_name
+    FRONTEND_URL   = var.frontend_url
+
+    TWILIO_ACCOUNT_SID  = "AC00000000000000000000000000000000"
+    TWILIO_AUTH_TOKEN   = "sms-disabled-for-pfe"
+    TWILIO_PHONE_NUMBER = "+10000000000"
+  })
+
+  secret_environment_variables = {
+    DB_PASSWORD = {
+      secret_name         = "db-password"
+      key_vault_secret_id = azurerm_key_vault_secret.postgres_password[0].versionless_id
+    }
+
+    MAIL_USERNAME = {
+      secret_name         = "mail-username"
+      key_vault_secret_id = "${module.key_vault.uri}secrets/mail-username"
+    }
+
+    MAIL_PASSWORD = {
+      secret_name         = "mail-password"
+      key_vault_secret_id = "${module.key_vault.uri}secrets/mail-password"
+    }
+
+    JWT_SECRET = {
+      secret_name         = "jwt-secret"
+      key_vault_secret_id = azurerm_key_vault_secret.backend_jwt_secret[0].versionless_id
+    }
+
+    ADMIN_EMAIL = {
+      secret_name         = "admin-email"
+      key_vault_secret_id = "${module.key_vault.uri}secrets/mail-username"
+    }
+
+    ADMIN_PASSWORD = {
+      secret_name         = "admin-password"
+      key_vault_secret_id = azurerm_key_vault_secret.backend_admin_password[0].versionless_id
+    }
+
+    MINIO_ACCESS_KEY = {
+      secret_name         = "minio-access-key"
+      key_vault_secret_id = azurerm_key_vault_secret.minio_root_user[0].versionless_id
+    }
+
+    MINIO_SECRET_KEY = {
+      secret_name         = "minio-secret-key"
+      key_vault_secret_id = azurerm_key_vault_secret.minio_root_password[0].versionless_id
+    }
+  }
+
+  tags = local.common_tags
 }
 
 module "frontend" {
