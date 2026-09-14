@@ -91,3 +91,14 @@ variable "minio_image" {
   type        = string
   default     = "acrmamasalamapfey4yy6.azurecr.io/mama-salama-minio@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2"
 }
+variable "enable_discovery" {
+  description = "Active ou désactive le Service Discovery Eureka"
+  type        = bool
+  default     = false
+}
+
+variable "discovery_image" {
+  description = "Image Docker immuable du Service Discovery"
+  type        = string
+  default     = "acrmamasalamapfey4yy6.azurecr.io/mama-salama-discovery@sha256:97e09b20b581e4b0364350ef0c4e7a6c12343c4f870221caddde121701342ef4"
+}

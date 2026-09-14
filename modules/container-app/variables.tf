@@ -63,3 +63,8 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+variable "external_enabled" {
+  description = "Autorise ou interdit l'accès public à la Container App"
+  type        = bool
+  default     = false
+}

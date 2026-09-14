@@ -33,3 +33,7 @@ output "minio_endpoint" {
   description = "Adresse interne du service MinIO"
   value       = var.enable_minio ? module.minio[0].endpoint : null
 }
+output "discovery_endpoint" {
+  description = "Adresse interne du Service Discovery Eureka"
+  value       = var.enable_discovery ? module.discovery[0].url : null
+}

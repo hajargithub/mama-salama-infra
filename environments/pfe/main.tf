@@ -166,3 +166,32 @@ module "minio" {
 
   tags = local.common_tags
 }
+module "discovery" {
+  count  = var.enable_discovery ? 1 : 0
+  source = "../../modules/container-app"
+
+  name                         = "discovery-${var.project_name}-${var.environment}"
+  resource_group_name          = azurerm_resource_group.main.name
+  location                     = azurerm_resource_group.main.location
+  container_app_environment_id = module.container_app_environment.id
+
+  container_name = "service-discovery"
+  image          = var.discovery_image
+  target_port    = 8761
+  cpu            = 0.5
+  memory         = "1Gi"
+  min_replicas   = 1
+  max_replicas   = 1
+
+  registry_server  = module.acr.login_server
+  registry_id      = module.acr.id
+  external_enabled = false
+
+  environment_variables = {
+    SERVER_PORT                        = "8761"
+    EUREKA_CLIENT_REGISTER_WITH_EUREKA = "false"
+    EUREKA_CLIENT_FETCH_REGISTRY       = "false"
+  }
+
+  tags = local.common_tags
+}

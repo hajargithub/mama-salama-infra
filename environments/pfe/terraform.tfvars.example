@@ -8,6 +8,7 @@ enable_postgres = false
 enable_backend  = false
 enable_frontend = false
 enable_minio    = false
+enable_discovery = false
 
 # backend_image = "<acr-name>.azurecr.io/mama-salama-backend:<tag-immuable>"
 # backend_port  = 8080
