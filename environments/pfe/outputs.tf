@@ -29,3 +29,7 @@ output "frontend_hostname" {
 output "postgres_fqdn" {
   value = var.enable_postgres ? module.postgres[0].fqdn : null
 }
+output "minio_endpoint" {
+  description = "Adresse interne du service MinIO"
+  value       = var.enable_minio ? module.minio[0].endpoint : null
+}

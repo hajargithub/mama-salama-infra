@@ -80,3 +80,14 @@ variable "postgres_sku_name" {
   type        = string
   default     = "B_Standard_B1ms"
 }
+variable "enable_minio" {
+  description = "Active ou désactive le déploiement de MinIO"
+  type        = bool
+  default     = false
+}
+
+variable "minio_image" {
+  description = "Image Docker immuable de MinIO stockée dans Azure Container Registry"
+  type        = string
+  default     = "acrmamasalamapfey4yy6.azurecr.io/mama-salama-minio@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2"
+}

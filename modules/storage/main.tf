@@ -14,3 +14,8 @@ resource "azurerm_storage_container" "uploads" {
   storage_account_id    = azurerm_storage_account.this.id
   container_access_type = "private"
 }
+resource "azurerm_storage_share" "minio_data" {
+  name               = "minio-data"
+  storage_account_id = azurerm_storage_account.this.id
+  quota              = 5
+}

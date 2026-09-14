@@ -82,6 +82,33 @@ module "postgres" {
   sku_name               = var.postgres_sku_name
   tags                   = local.common_tags
 }
+resource "random_string" "minio_root_user_suffix" {
+  count   = var.enable_minio ? 1 : 0
+  length  = 8
+  upper   = false
+  special = false
+}
+
+resource "random_password" "minio_root_password" {
+  count            = var.enable_minio ? 1 : 0
+  length           = 32
+  special          = true
+  override_special = "!#%&*-_"
+}
+
+resource "azurerm_key_vault_secret" "minio_root_user" {
+  count        = var.enable_minio ? 1 : 0
+  name         = "minio-root-user"
+  value        = "minio${random_string.minio_root_user_suffix[0].result}"
+  key_vault_id = module.key_vault.id
+}
+
+resource "azurerm_key_vault_secret" "minio_root_password" {
+  count        = var.enable_minio ? 1 : 0
+  name         = "minio-root-password"
+  value        = random_password.minio_root_password[0].result
+  key_vault_id = module.key_vault.id
+}
 
 module "container_app_environment" {
   source                     = "../../modules/container-app-environment"
@@ -115,4 +142,27 @@ module "frontend" {
   resource_group_name = azurerm_resource_group.main.name
   location            = "West Europe"
   tags                = local.common_tags
+}
+module "minio" {
+  count  = var.enable_minio ? 1 : 0
+  source = "../../modules/minio"
+
+  name                         = "minio-${var.project_name}-${var.environment}"
+  resource_group_name          = azurerm_resource_group.main.name
+  location                     = azurerm_resource_group.main.location
+  container_app_environment_id = module.container_app_environment.id
+
+  image           = var.minio_image
+  registry_server = module.acr.login_server
+  registry_id     = module.acr.id
+
+  storage_account_name       = module.storage.name
+  storage_account_access_key = module.storage.primary_access_key
+  storage_share_name         = module.storage.minio_share_name
+
+  key_vault_id            = module.key_vault.id
+  root_user_secret_id     = azurerm_key_vault_secret.minio_root_user[0].versionless_id
+  root_password_secret_id = azurerm_key_vault_secret.minio_root_password[0].versionless_id
+
+  tags = local.common_tags
 }
