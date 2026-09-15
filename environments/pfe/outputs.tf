@@ -37,3 +37,7 @@ output "discovery_endpoint" {
   description = "Adresse interne du Service Discovery Eureka"
   value       = var.enable_discovery ? module.discovery[0].url : null
 }
+output "gateway_url" {
+  description = "Adresse publique de l'API Gateway"
+  value       = var.enable_gateway ? module.gateway[0].url : null
+}

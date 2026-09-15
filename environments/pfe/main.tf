@@ -294,3 +294,60 @@ module "discovery" {
 
   tags = local.common_tags
 }
+module "gateway" {
+  count  = var.enable_gateway ? 1 : 0
+  source = "../../modules/container-app"
+
+  name                         = "gateway-${var.project_name}-${var.environment}"
+  resource_group_name          = azurerm_resource_group.main.name
+  location                     = azurerm_resource_group.main.location
+  container_app_environment_id = module.container_app_environment.id
+
+  container_name = "service-gateway"
+  image          = var.gateway_image
+  target_port    = var.gateway_port
+  cpu            = 0.5
+  memory         = "1Gi"
+  min_replicas   = 1
+  max_replicas   = 1
+
+  registry_server  = module.acr.login_server
+  registry_id      = module.acr.id
+  external_enabled = true
+
+  environment_variables = {
+    SERVER_PORT                          = tostring(var.gateway_port)
+    EUREKA_CLIENT_SERVICEURL_DEFAULTZONE = "${module.discovery[0].url}/eureka/"
+    EUREKA_CLIENT_REGISTER_WITH_EUREKA   = "false"
+    EUREKA_CLIENT_FETCH_REGISTRY         = "true"
+
+    SPRING_APPLICATION_JSON = jsonencode({
+      spring = {
+        cloud = {
+          gateway = {
+            mvc = {
+              routes = [
+                {
+                  id         = "mama-salama-core"
+                  uri        = "lb://mama-salama-core"
+                  predicates = ["Path=/api/core/**"]
+                  filters    = ["StripPrefix=2"]
+                },
+                {
+                  id  = "mama-salama-ai"
+                  uri = "lb://mama-salama-ai"
+                  predicates = [
+                    "Path=/api/ai/api/chat,/api/ai/api/voice-chat,/api/ai/api/health"
+                  ]
+                  filters = ["StripPrefix=2"]
+                }
+              ]
+            }
+          }
+        }
+      }
+    })
+  }
+
+  tags = local.common_tags
+}

@@ -113,3 +113,20 @@ variable "minio_bucket_name" {
   type        = string
   default     = "mama-salama"
 }
+variable "enable_gateway" {
+  description = "Active ou désactive l'API Gateway publique"
+  type        = bool
+  default     = false
+}
+
+variable "gateway_image" {
+  description = "Image Docker immuable de l'API Gateway"
+  type        = string
+  default     = "acrmamasalamapfey4yy6.azurecr.io/mama-salama-gateway@sha256:fb4dba2413d415a6fe8d609d3b5e02b07ed2cb8aa1c932a6f5f635eaa878c5bd"
+}
+
+variable "gateway_port" {
+  description = "Port exposé par l'API Gateway"
+  type        = number
+  default     = 8080
+}
